@@ -230,7 +230,7 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
                 if len(buffers) is 1:
                     print sysadmintoolkit.utils.get_green_text('Symmteric')
                 else:
-                    print sysadmintoolkit.utils.get_red_text('Asymmteric')
+                    print sysadmintoolkit.utils.get_red_text('Asymmetric')
 
             print '      %s:' % ', '.join(buffers[i][1])
             print sysadmintoolkit.utils.indent_text(buffers[i][0], indent=8, width=self.cmdstack[-1].width)
@@ -278,6 +278,9 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
         self.logger.debug('Displaying symmetric files for groups: %s' % group)
 
         for nodeset in group:
+            if nodeset not in self.symmetric_files:
+                continue
+
             print 'Group: %s' % nodeset
             print
 
@@ -286,9 +289,9 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
 
             for sym_file in sym_file_keys:
                 if 'recursive' in self.symmetric_files[nodeset][sym_file]:
-                    buffer_nodes_list = self.run_cluster_command('find %s -type f | xargs md5sum' % sym_file, self.get_reachable_nodes(nodeset))
+                    buffer_nodes_list = self.run_cluster_command('find %s -type f | xargs md5sum | sort' % sym_file, self.get_reachable_nodes(nodeset))
                 else:
-                    buffer_nodes_list = self.run_cluster_command('md5sum %s' % sym_file, self.get_reachable_nodes(nodeset))
+                    buffer_nodes_list = self.run_cluster_command('md5sum %s | sort' % sym_file, self.get_reachable_nodes(nodeset))
 
                 if len(self.symmetric_files[nodeset][sym_file]):
                     print '  %s (%s):' % (sym_file, ','.join(self.symmetric_files[nodeset][sym_file])),
@@ -310,6 +313,9 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
         self.logger.debug('Displaying symmetric commands for groups: %s' % group)
 
         for nodeset in group:
+            if nodeset not in self.symmetric_commands:
+                continue
+
             print 'Group: %s' % nodeset
             print
 
