@@ -13,7 +13,7 @@ Main website:
 
 '''
 
-__version__ = '0.1.0'
+__version__ = '0.1.0a'
 
 import ClusterShell
 import ClusterShell.Task
@@ -188,17 +188,28 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
         '''
         Simple test to ensure nodes are reachable
         '''
-        self.clustershell_task.shell('echo CONNECTED', nodes=self.nodesets[nodeset])
-        self.clustershell_task.resume()
+        self.logger.debug('Testing reachability for nodeset %s' % nodeset)
+
+        buffer_nodes_list = self.run_cluster_command('echo CONNECTED', self.nodesets[nodeset])
 
         reachable_nodes = []
 
-        for buf , nodes in self.clustershell_task.iter_buffers() :
+        for buf, nodes in buffer_nodes_list :
             if 'CONNECTED' in buf:
                 for reachable_node in nodes:
                     reachable_nodes.append(reachable_node)
 
         self.reachable_nodes[nodeset] = ClusterShell.NodeSet.NodeSet(','.join(reachable_nodes))
+
+    def get_reachable_nodes(self, nodesetname):
+        if nodesetname not in self.reachable_nodes:
+            if nodesetname not in self.nodesets:
+                self.logger.error('Trying to get reachable nodes for a non registered nodeset (%s)' % nodesetname)
+                return ClusterShell.NodeSet.NodeSet()
+            else:
+                self.test_reachability(nodesetname)
+
+        return self.reachable_nodes[nodesetname]
 
     def leave_mode(self, cmdprompt):
         '''
@@ -209,6 +220,32 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
             self.clustershell_task.abort(kill=True)
 
         super(Clustering, self).leave_mode(cmdprompt)
+
+    def display_symmetric_buffers(self, buffers):
+        '''
+        Displays the content of a shell task's buffers, and displays symmetric/asymmetric information
+        '''
+        for i in range(len(buffers)):
+            if i is 0:
+                if len(buffers) is 1:
+                    print sysadmintoolkit.utils.get_green_text('Symmteric')
+                else:
+                    print sysadmintoolkit.utils.get_red_text('Asymmteric')
+
+            print '      %s:' % ', '.join(buffers[i][1])
+            print sysadmintoolkit.utils.indent_text(buffers[i][0], indent=8, width=self.cmdstack[-1].width)
+
+    def run_cluster_command(self, command, nodeset):
+        '''
+        Returns a list of (buffer,nodes) of the executed command on nodes
+        from the nodesetname.
+        '''
+        self.logger.debug('Running command "%s" on nodeset %s' % (command, nodeset))
+
+        self.clustershell_task.shell(command, nodes=nodeset)
+        self.clustershell_task.resume()
+
+        return [(buffer, nodes) for (buffer, nodes) in self.clustershell_task.iter_buffers()]
 
     # Dynamic keywords
 
@@ -226,20 +263,6 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
 
         return nodesetmap
 
-    def display_symmetric_buffers(self, buffers):
-        '''
-        Displays the content of a shell task's buffers, and displays symmetric/asymmetric information
-        '''
-        for i in range(len(buffers)):
-            if i is 0:
-                if len(buffers) is 1:
-                    print sysadmintoolkit.utils.get_green_text('Symmteric')
-                else:
-                    print sysadmintoolkit.utils.get_red_text('Asymmteric')
-
-            print '      %s:' % ', '.join(buffers[i][1])
-            print sysadmintoolkit.utils.indent_text(buffers[i][0], indent=8, width=self.cmdstack[-1].width)
-
     # Sysadmin-toolkit commands
 
     def display_symmetric_files(self, line, mode):
@@ -247,7 +270,7 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
         Displays symmetric files for the specified group
         '''
         if 'group' in line:
-            group = [line.split()[-1]]
+            group = [line.split()[line.split().index('group') + 1]]
         else:
             group = self.get_nodesets().keys()
             group.sort()
@@ -263,25 +286,23 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
 
             for sym_file in sym_file_keys:
                 if 'recursive' in self.symmetric_files[nodeset][sym_file]:
-                    self.clustershell_task.shell('find %s -type f | xargs md5sum' % sym_file, nodes=self.nodesets[nodeset])
+                    buffer_nodes_list = self.run_cluster_command('find %s -type f | xargs md5sum' % sym_file, self.get_reachable_nodes(nodeset))
                 else:
-                    self.clustershell_task.shell('md5sum %s' % sym_file, nodes=self.nodesets[nodeset])
+                    buffer_nodes_list = self.run_cluster_command('md5sum %s' % sym_file, self.get_reachable_nodes(nodeset))
 
                 if len(self.symmetric_files[nodeset][sym_file]):
                     print '  %s (%s):' % (sym_file, ','.join(self.symmetric_files[nodeset][sym_file])),
                 else:
                     print '  %s:' % sym_file,
 
-                self.clustershell_task.resume()
-
-                self.display_symmetric_buffers([bufr_nodes for bufr_nodes in self.clustershell_task.iter_buffers()])
+                self.display_symmetric_buffers(buffer_nodes_list)
 
     def display_symmetric_commands(self, line, mode):
         '''
         Displays symmetric commands for the specified group
         '''
         if 'group' in line:
-            group = [line.split()[-1]]
+            group = [line.split()[line.split().index('group') + 1]]
         else:
             group = self.get_nodesets().keys()
             group.sort()
@@ -293,13 +314,11 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
             print
 
             for sym_command in self.symmetric_commands[nodeset]:
-                self.clustershell_task.shell(sym_command, nodes=self.nodesets[nodeset])
+                buffer_nodes_list = self.run_cluster_command(sym_command, self.get_reachable_nodes(nodeset))
 
                 print '  "%s" :' % sym_command,
 
-                self.clustershell_task.resume()
-
-                self.display_symmetric_buffers([bufr_nodes for bufr_nodes in self.clustershell_task.iter_buffers()])
+                self.display_symmetric_buffers(buffer_nodes_list)
 
     def debug(self, line, mode):
         '''
