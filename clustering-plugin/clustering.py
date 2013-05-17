@@ -183,6 +183,23 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
             self.nodesets[setname] = newnodeset
             return True
 
+    def get_nodeset(self, setname):
+        if setname in self.nodesets:
+            return self.nodesets[setname]
+        else:
+            self.logger.error('Nodeset %s is not registered' % setname)
+            raise sysadmintoolkit.exception.PluginError('Nodeset %s is not registered' % setname, errno=300, plugin=self)
+
+    def get_reachable_nodes(self, setname):
+        if setname in self.reachable_nodes:
+            return self.reachable_nodes[setname]
+        else:
+            if setname in self.nodesets:
+                self.test_reachability(setname)
+                return self.reachable_nodes[setname]
+            else:
+                self.logger.error('Nodeset %s is not registered' % setname)
+                raise sysadmintoolkit.exception.PluginError('Nodeset %s is not registered' % setname, errno=300, plugin=self)
 
     def test_reachability(self, nodeset='default'):
         '''
