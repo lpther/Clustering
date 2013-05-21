@@ -40,7 +40,7 @@ def get_plugin(logger, config):
 
 class Clustering(sysadmintoolkit.plugin.Plugin):
     def __init__(self, logger, config):
-        super(Clustering, self).__init__('clustering', logger, config)
+        super(Clustering, self).__init__('clustering', logger, config, version=__version__)
 
         self.nodesets = {}
         self.reachable_nodes = {}
@@ -266,7 +266,7 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
 
     # Dynamic keywords
 
-    def get_nodesets(self, dyn_keyword=None):
+    def get_nodesets(self, user_input_obj=None):
         '''
         Returns the list of registered nodesets and description
         '''
@@ -282,10 +282,12 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
 
     # Sysadmin-toolkit commands
 
-    def display_symmetric_files(self, line, mode):
+    def display_symmetric_files(self, user_input_obj):
         '''
         Displays symmetric files for the specified group
         '''
+        line = user_input_obj.get_entered_command()
+
         if 'group' in line:
             group = [line.split()[line.split().index('group') + 1]]
         else:
@@ -317,10 +319,12 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
 
                 self.display_symmetric_buffers(buffer_nodes_list)
 
-    def display_symmetric_commands(self, line, mode):
+    def display_symmetric_commands(self, user_input_obj):
         '''
         Displays symmetric commands for the specified group
         '''
+        line = user_input_obj.get_entered_command()
+
         if 'group' in line:
             group = [line.split()[line.split().index('group') + 1]]
         else:
@@ -343,7 +347,7 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
 
                 self.display_symmetric_buffers(buffer_nodes_list)
 
-    def debug(self, line, mode):
+    def debug(self, user_input_obj):
         '''
         Displays clustering configuration and state
         '''
