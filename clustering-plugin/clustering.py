@@ -177,7 +177,7 @@ class Clustering(sysadmintoolkit.plugin.Plugin):
         newnodeset = ClusterShell.NodeSet.NodeSet(nodes)
 
         if len(newnodeset) is 0:
-            self.logger.warning('Node entry %s could not be resolved . Is it defined in the clustershell groups file?' % setname)
+            self.logger.warning('Node entry %s could not be resolved. Is it defined in the clustershell groups file?' % setname)
             return False
         else:
             self.nodesets[setname] = newnodeset
