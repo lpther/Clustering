@@ -1,19 +1,5 @@
-'''Clustering plugin (designed to sysadmin-toolkit)
-
-The clustering plugin provides a few commands to ensure important files
-and command output in the cluster are symmetric.
-
-This plugin provides a clustering service for other plugins.
-
-Run "debug commandprompt" for a list of available commands for this plugin,
-or "debug clustering" for a list of configured elements.
-
-Main website:
-    https://github.com/lpther/Clustering
-
-'''
-
-__version__ = '0.1.0a'
+__version__ = '0.1.0b'
+__website__ = 'https://github.com/lpther/Clustering'
 
 import ClusterShell
 import ClusterShell.Task
@@ -39,6 +25,74 @@ def get_plugin(logger, config):
 
 
 class Clustering(sysadmintoolkit.plugin.Plugin):
+    '''
+    Description
+    -----------
+
+    Provides cluster synchronization verification and clustering services to other plugins.
+
+    Requirements
+    ------------
+
+    The clustering plugin requires the ClusterShell package, version
+    *1.6* or more.
+
+    Configuration
+    -------------
+
+    *default-nodeset*
+      This is the nodeset used by default if no nodeset is specified.
+
+      Groups configured in /etc/clustershell/groups can be used for the
+      default nodeset.
+
+      Default: @all
+
+    *symmetric-files*
+      Verify that these files are symmetric across the cluster using md5sum.
+
+      Syntax:
+
+      recursive: Verify recursively in a directory.
+
+      @group: Group defined in the clustershell configuration
+
+
+
+      ::
+
+        symmetric-files = [@group:][recursive|]<filename1> ,
+                          [@group:][recursive|]<filename2> ,
+                          ...
+                          [@group:][recursive|]<filenameN>
+
+      Examples:
+
+      ::
+
+        symmetric-files = /etc/resolv.conf,
+                          @all:/etc/r*.conf,
+                          recursive|/etc/udev/rules.d,
+                          @mygroup:/etc/hostname,
+
+      Note: Wildcards can be used, as they are passed to a shell to launch md5sum.
+
+      Default: None
+
+    *symmetric-commands*
+      Verify that output from these commands are symmetric across.
+
+      Examples:
+
+      ::
+
+        symmetric-commands = @all:uname | grep -i Linux,
+                             @all:echo $RANDOM \; uptime,
+
+      Default: None
+
+    '''
+
     def __init__(self, logger, config):
         super(Clustering, self).__init__('clustering', logger, config, version=__version__)
 
