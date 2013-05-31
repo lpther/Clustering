@@ -13,7 +13,7 @@ Built on the ClusterShell python package, it provides to other plugins a way to 
 Clustering Plugin is coded for python 2.7 on Ubuntu 12.04, and requires the following packages:
 
 - Sysadmin-Toolkit ([https://github.com/lpther/SysadminToolkit](https://github.com/lpther/SysadminToolkit))
-- ClusterShell 1.6 ([https://github.com/cea-hpc/clustershell](https://github.com/cea-hpc/clustershell))
+- ClusterShell 1.6 (https://github.com/cea-hpc/clustershell, Ubuntu package available at https://launchpad.net/ubuntu/+archive/primary/+files/clustershell_1.6-1_all.deb)
 
 ## Basic Usage ##
 
@@ -36,7 +36,7 @@ Define in the configuration file the default nodeset, symmetric files and comman
 
 Display files that are supposed to be exactly the same across the cluster:
 
-	sysadmin-toolkit# show cluster symmetric-files
+    sysadmin-toolkit# show cluster symmetric-files
 	Group: default
 
 	  /etc/resolv.conf: Symmteric

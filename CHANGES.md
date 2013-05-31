@@ -2,6 +2,10 @@
 
 ## Clustering ##
 
+**0.1.0b - May 2013**
+
+- Promoted to beta
+
 **0.1.0a - May 2013**
 
 - Initial release
